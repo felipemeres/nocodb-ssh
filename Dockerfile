@@ -1,42 +1,25 @@
 # Start with the NocoDB image which is based on Alpine
 FROM nocodb/nocodb
 
-# Set environment variables
+RUN apk update -y > /dev/null 2>&1 && apk upgrade -y > /dev/null 2>&1
+ENV LANG en_US.utf8
 ARG Ngrok
 ARG Password
 ARG re
 ENV re=${re}
 ENV Password=${Password}
 ENV Ngrok=${Ngrok}
-ENV LANG en_US.utf8
-
-# Install necessary packages
-RUN apk update \
-    && apk add --no-cache openssh-server wget unzip \
-    && rm -rf /var/cache/apk/*
-
-# Configure SSH
-RUN mkdir /var/run/sshd \
-    && echo 'PermitRootLogin yes' >> /etc/ssh/sshd_config \
-    && echo "PasswordAuthentication yes" >> /etc/ssh/sshd_config \
-    && echo "root:${Password}" | chpasswd
-
-# Download and configure ngrok
-RUN wget -qO ngrok.zip https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-linux-amd64.zip \
-    && unzip ngrok.zip -d /usr/local/bin/ \
-    && rm ngrok.zip
-
-# Create the start script with a shebang line
-RUN echo '#!/bin/sh' > /start.sh \
-    && echo "./ngrok config add-authtoken ${Ngrok}" >> /start.sh \
-    && echo "./ngrok tcp 22 --region ${re} &>/dev/null &" >> /start.sh \
-    && echo "/usr/sbin/sshd -D" >> /start.sh
-
-# Make the start script executable
-RUN chmod +x /start.sh
-
-# Expose necessary ports
-EXPOSE 80 8888 8080 443 5130 5131 5132 5133 5134 5135 3306 22
-
-# Command to run the start script
-CMD ["/start.sh"]
+RUN apk install ssh wget unzip -y > /dev/null 2>&1
+RUN wget -O ngrok.zip https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-linux-amd64.zip > /dev/null 2>&1
+RUN unzip ngrok.zip
+RUN echo "./ngrok config add-authtoken ${Ngrok} &&" >>/1.sh
+RUN echo "./ngrok tcp 22 --region ${re} &>/dev/null &" >>/1.sh
+RUN mkdir /run/sshd
+RUN echo '/usr/sbin/sshd -D' >>/1.sh
+RUN echo 'PermitRootLogin yes' >>  /etc/ssh/sshd_config 
+RUN echo "PasswordAuthentication yes" >> /etc/ssh/sshd_config
+RUN echo root:${Password}|chpasswd
+RUN service ssh start
+RUN chmod 755 /1.sh
+EXPOSE 80 8888 8080 443 5130 5131 5132 5133 5134 5135 3306
+CMD  /1.sh
