@@ -24,12 +24,13 @@ RUN mkdir /var/run/sshd \
 # Download and configure ngrok
 RUN wget -qO ngrok.zip https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-linux-amd64.zip \
     && unzip ngrok.zip -d /usr/local/bin/ \
-    && rm ngrok.zip \
-    && echo "./ngrok config add-authtoken ${Ngrok}" >> /start.sh \
-    && echo "./ngrok tcp 22 --region ${re} &>/dev/null &" >> /start.sh
+    && rm ngrok.zip
 
-# Add the command to start SSH to the script
-RUN echo '/usr/sbin/sshd -D' >> /start.sh
+# Create the start script with a shebang line
+RUN echo '#!/bin/sh' > /start.sh \
+    && echo "./ngrok config add-authtoken ${Ngrok}" >> /start.sh \
+    && echo "./ngrok tcp 22 --region ${re} &>/dev/null &" >> /start.sh \
+    && echo "/usr/sbin/sshd -D" >> /start.sh
 
 # Make the start script executable
 RUN chmod +x /start.sh
