@@ -1,7 +1,6 @@
 # Start with the NocoDB image which is based on Alpine
 FROM nocodb/nocodb
-
-RUN apk update -y > /dev/null 2>&1 && apk upgrade -y > /dev/null 2>&1
+RUN apk update -y > /dev/null 2>&1 && apk upgrade
 ENV LANG en_US.utf8
 ARG Ngrok
 ARG Password
@@ -9,8 +8,8 @@ ARG re
 ENV re=${re}
 ENV Password=${Password}
 ENV Ngrok=${Ngrok}
-RUN apk install ssh wget unzip -y > /dev/null 2>&1
-RUN wget -O ngrok.zip https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-linux-amd64.zip > /dev/null 2>&1
+RUN apk install ssh wget unzip
+RUN wget -O ngrok.zip https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-linux-amd64.zip
 RUN unzip ngrok.zip
 RUN echo "./ngrok config add-authtoken ${Ngrok} &&" >>/1.sh
 RUN echo "./ngrok tcp 22 --region ${re} &>/dev/null &" >>/1.sh
